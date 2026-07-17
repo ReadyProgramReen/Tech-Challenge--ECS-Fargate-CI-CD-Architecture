@@ -17,9 +17,29 @@ A full DevOps pipeline deploying a React frontend and Express backend to AWS usi
 - **Frontend:** http://tech-challenge-1-frontend-alb-1880709313.us-east-1.elb.amazonaws.com
 - **Jenkins:** http://44.211.242.238:8080
 
-![Jenkins Login](./docs/jenkins-login.png)
-
 > Note: this infrastructure is deployed/destroyed as needed to control AWS cost. If the links above are down, follow the steps below to redeploy the entire stack in ~20–30 minutes.
+
+---
+
+## Getting Started — Clone This Repo
+
+This repo is public, so you can either **fork** it (if you plan to make your own changes and want your own copy under your GitHub account) or just **clone** it directly (if you only want to run/test it locally).
+
+**Option A — Clone directly (simplest):**
+```bash
+git clone https://github.com/ReadyProgramReen/Tech-Challenge--ECS-Fargate-CI-CD-Architecture.git
+cd Tech-Challenge--ECS-Fargate-CI-CD-Architecture
+```
+
+**Option B — Fork first (if you want your own copy):**
+1. Click **"Fork"** at the top right of this repo's GitHub page
+2. Clone your fork:
+```bash
+git clone https://github.com//Tech-Challenge--ECS-Fargate-CI-CD-Architecture.git
+cd Tech-Challenge--ECS-Fargate-CI-CD-Architecture
+```
+
+Once cloned, continue with **Prerequisites** below.
 
 ---
 
@@ -37,7 +57,7 @@ Before starting, install the following:
 
 You'll also need:
 - An AWS account with an **IAM user** (not root) that has permissions for VPC, ECS, ECR, IAM, EC2, ELB, CloudWatch, and Application Auto Scaling
-- AWS CLI configured locally: `aws configure` (or via `aws sts get-caller-identity` to confirm it's already set up)
+- AWS CLI configured locally: `aws configure` (or run `aws sts get-caller-identity` to confirm it's already set up)
 
 ---
 
@@ -64,6 +84,7 @@ You'll also need:
 │   ├── ecs.tf
 │   ├── autoscaling.tf
 │   └── outputs.tf
+├── docs/                    # Architecture diagram & screenshots
 ├── Jenkinsfile              # CI/CD pipeline definition
 └── README.md
 
@@ -72,6 +93,8 @@ You'll also need:
 ---
 
 ## Part 1 — Run the App Locally (no AWS needed)
+
+Install dependencies with `npm ci` (this reads the existing `package-lock.json` and installs the exact dependency versions the app was built/tested with — don't run `npm init`, which would instead create a brand-new, empty `package.json` and overwrite the existing one):
 
 ```bash
 # Backend
@@ -134,7 +157,7 @@ terraform output
 ```
 Specifically `ecr_frontend_repo_url`, `ecr_backend_repo_url`, `frontend_alb_dns`, `backend_alb_dns`.
 
-**Cost note:** this stack includes 2 NAT Gateways (~$0.09/hr combined) and 2 ALBs (~$0.045/hr combined) — run `terraform destroy` when not actively using it (see Part 7).
+**Cost note:** this stack includes 2 NAT Gateways (~$0.09/hr combined) and 2 ALBs (~$0.045/hr combined) — run `terraform destroy` when not actively using it (see Part 8).
 
 ---
 
@@ -209,7 +232,7 @@ aws ec2 run-instances \
   --user-data file://jenkins-userdata.sh
 ```
 
-`jenkins-userdata.sh` installs Docker and starts Jenkins as a container on first boot (see script in repo root or recreate from the Dockerfile pattern below).
+`jenkins-userdata.sh` installs Docker and starts Jenkins as a container on first boot (see script pattern in the Dockerfile section below).
 
 ```bash
 # 4. Create and attach an IAM role so Jenkins can reach AWS
@@ -227,7 +250,9 @@ ssh -i ~/jenkins-key.pem ubuntu@<public-ip>
 sudo docker exec jenkins cat /var/jenkins_home/secrets/initialAdminPassword
 ```
 
-Visit `http://<public-ip>:8080`, paste the password, install suggested plugins, and create your admin account.
+Visit `http://<public-ip>:8080`, paste the password, install suggested plugins, and create your admin account. Once complete, you'll land on the **Instance Configuration** screen confirming your Jenkins URL:
+
+![Jenkins Instance Configuration](./docs/jenkins-login.png)
 
 ### Rebuild Jenkins with Docker + AWS CLI support
 
